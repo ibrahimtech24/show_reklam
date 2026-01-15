@@ -17,35 +17,30 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'ریکلامەکانی گۆگڵ',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const AdDemoScreen(),
+      home: const HomeScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class AdDemoScreen extends StatefulWidget {
-  const AdDemoScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<AdDemoScreen> createState() => _AdDemoScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _AdDemoScreenState extends State<AdDemoScreen> {
-  final AdManager _adManager = AdManager();
-  int _rewardPoints = 0;
+class _HomeScreenState extends State<HomeScreen> {
+  final _adManager = AdManager();
+  int _points = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadAds();
-  }
-
-  // بارکردنی هەموو جۆرەکانی ریکلام
-  Future<void> _loadAds() async {
-    await _adManager.loadBannerAd();
-    await _adManager.loadInterstitialAd();
-    await _adManager.loadRewardedAd();
-    setState(() {});
+    print('📱 دەستپێکردنی ئەپ...');
+    _adManager.loadBannerAd();
+    _adManager.loadInterstitialAd();
+    _adManager.loadRewardedAd();
   }
 
   @override
@@ -54,166 +49,91 @@ class _AdDemoScreenState extends State<AdDemoScreen> {
     super.dispose();
   }
 
+  void _showRewardAd() {
+    _adManager.showRewardedAd(
+      onReward: (amount, type) {
+        setState(() => _points += amount);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🎉 $amount خاڵت وەرگرت!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('نموونەی ریکلامەکانی گۆگڵ'),
+        title: const Text('ریکلامەکانی گۆگڵ'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        elevation: 2,
       ),
       body: Column(
         children: [
-          // ناوەڕۆکی سەرەکی
+          const SizedBox(height: 100),
+          const Text(
+            textAlign: TextAlign.center,
+            'بۆ دەسکەوتنی لینکی پرۆژەکە سەردانی ئەکاونتی گیتهەبەکەم\n بکە لینکی لە چەنالی تیلیگرام دادەنێم',
+            style: TextStyle(fontSize: 16),
+          ),
           Expanded(
             child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.monetization_on,
-                      size: 80,
-                      color: Colors.blue,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.monetization_on,
+                    size: 80,
+                    color: Colors.blue,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'خاڵەکانت: $_points 🎁',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'خاڵەکانت: $_rewardPoints 🎁',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  ElevatedButton.icon(
+                    onPressed: _adManager.isInterstitialAdLoaded
+                        ? _adManager.showInterstitialAd
+                        : null,
+                    icon: const Icon(Icons.fullscreen),
+                    label: const Text('ریکلامی تەواو'),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  ElevatedButton.icon(
+                    onPressed: _adManager.isRewardedAdLoaded
+                        ? _showRewardAd
+                        : null,
+                    icon: const Icon(Icons.card_giftcard),
+                    label: const Text('ریکلام بۆ خاڵ'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
                     ),
-                    const SizedBox(height: 40),
-
-                    // دوگمەی ئینتەرستیشڵ ئاد
-                    ElevatedButton.icon(
-                      onPressed: _adManager.isInterstitialAdLoaded
-                          ? () => _adManager.showInterstitialAd()
-                          : null,
-                      icon: const Icon(Icons.fullscreen),
-                      label: const Text('نیشاندانی ریکلامی تەواو'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 16,
-                        ),
-                        textStyle: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // دوگمەی ریواردید ئاد
-                    ElevatedButton.icon(
-                      onPressed: _adManager.isRewardedAdLoaded
-                          ? () {
-                              _adManager.showRewardedAd(
-                                onReward: (amount, type) {
-                                  setState(() {
-                                    _rewardPoints += amount;
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        '🎉 $amount خاڵت وەرگرت!',
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                      backgroundColor: Colors.green,
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          : null,
-                      icon: const Icon(Icons.card_giftcard),
-                      label: const Text('بینینی ریکلام بۆ خاڵ'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 16,
-                        ),
-                        textStyle: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // دۆخی ریکلامەکان
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            _buildAdStatus(
-                              'بانەر',
-                              _adManager.isBannerAdLoaded,
-                            ),
-                            const Divider(),
-                            _buildAdStatus(
-                              'ئینتەرستیشڵ',
-                              _adManager.isInterstitialAdLoaded,
-                            ),
-                            const Divider(),
-                            _buildAdStatus(
-                              'ریواردید',
-                              _adManager.isRewardedAdLoaded,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
 
-          // بانەر ئاد لە خوارەوە
+          // بانەر لە خوارەوە
           if (_adManager.isBannerAdLoaded && _adManager.bannerAd != null)
-            Container(
-              alignment: Alignment.bottomCenter,
+            SizedBox(
               width: _adManager.bannerAd!.size.width.toDouble(),
               height: _adManager.bannerAd!.size.height.toDouble(),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-              ),
               child: AdWidget(ad: _adManager.bannerAd!),
             ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAdStatus(String title, bool isLoaded) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 16)),
-        Row(
-          children: [
-            Icon(
-              isLoaded ? Icons.check_circle : Icons.pending,
-              color: isLoaded ? Colors.green : Colors.orange,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              isLoaded ? 'ئامادەیە' : 'بارکردن...',
-              style: TextStyle(
-                color: isLoaded ? Colors.green : Colors.orange,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
